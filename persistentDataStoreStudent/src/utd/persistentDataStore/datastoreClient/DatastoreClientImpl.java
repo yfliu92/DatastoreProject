@@ -48,14 +48,16 @@ public class DatastoreClientImpl implements DatastoreClient {
 			StreamUtil.writeData(data, outputStream);
 
 			String resCode = StreamUtil.readLine(inputStream);
+			
 			if ("ok".equals(resCode.toLowerCase())) {
 				logger.debug("Write Response: " + resCode);
 			} else {
 				logger.debug("Error Write Response: " + resCode);
 			}
-
+			
+			StreamUtil.closeSocket(inputStream);
 		} catch (IOException e) {
-			throw new ConnectionException(e.getMessage(), e);
+			e.printStackTrace();
 		}
 	}
 
@@ -67,6 +69,7 @@ public class DatastoreClientImpl implements DatastoreClient {
 	 */
 	@Override
 	public byte[] read(String name) throws ClientException, ConnectionException {
+		byte[] data = null;
 		try {
 			logger.debug("Executing Read Operation");
 			Socket socket = new Socket();
@@ -79,19 +82,22 @@ public class DatastoreClientImpl implements DatastoreClient {
 			StreamUtil.writeLine(name + "\n", outputStream);
 
 			String resCode = StreamUtil.readLine(inputStream);
-			byte[] data = null;
+			
 			if ("ok".equals(resCode.toLowerCase())) {
 				int length = Integer.parseInt(StreamUtil.readLine(inputStream));
 				data = StreamUtil.readData(length, inputStream);
 				logger.debug(data);
 			} else {
 				logger.debug("Error Read Response: " + resCode);
+				StreamUtil.closeSocket(inputStream);
 				throw new ClientException(resCode);
 			}
-			return data;
+			
+			StreamUtil.closeSocket(inputStream);
 		} catch (IOException e) {
-			throw new ConnectionException(e.getMessage(), e);
+			e.printStackTrace();
 		}
+		return data;
 	}
 
 	/*
@@ -116,6 +122,7 @@ public class DatastoreClientImpl implements DatastoreClient {
 			StreamUtil.writeLine(name + "\n", outputStream);
 
 			String resCode = StreamUtil.readLine(inputStream);
+			StreamUtil.closeSocket(inputStream);
 			if ("ok".equals(resCode.toLowerCase())) {
 				logger.debug("Delete Response: " + resCode);
 			} else {
@@ -123,7 +130,7 @@ public class DatastoreClientImpl implements DatastoreClient {
 				throw new ClientException(resCode);
 			}
 		} catch (IOException e) {
-			throw new ConnectionException(e.getMessage(), e);
+			e.printStackTrace();
 		}
 	}
 
@@ -134,7 +141,7 @@ public class DatastoreClientImpl implements DatastoreClient {
 	 */
 	@Override
 	public List<String> directory() throws ClientException, ConnectionException {
-
+		List<String> result = new ArrayList<>();
 		try {
 			logger.debug("Executing Directory Operation");
 			Socket socket = new Socket();
@@ -147,7 +154,7 @@ public class DatastoreClientImpl implements DatastoreClient {
 			StreamUtil.writeLine("directory\n", outputStream);
 
 			String resCode = StreamUtil.readLine(inputStream);
-			List<String> result = new ArrayList<>();
+			
 			
 			if ("ok".equals(resCode.toLowerCase())) {
 				int length = Integer.parseInt(StreamUtil.readLine(inputStream));
@@ -156,15 +163,15 @@ public class DatastoreClientImpl implements DatastoreClient {
 					length--;
 				}
 			} else {
+				StreamUtil.closeSocket(inputStream);
 				logger.debug("Error Directory Response: " + resCode);
 				throw new ClientException(resCode);
 			}
-			
-			return result;
-			
+			StreamUtil.closeSocket(inputStream);
 		} catch (IOException e) {
-			throw new ConnectionException(e.getMessage(), e);
+			e.printStackTrace();
 		}
+		return result;
 	}
 
 }
